@@ -19,3 +19,6 @@ A simple widget to display ExpressLRS LinkStats telemetry as well as common Beta
 
 ## Requirements
 * Tested on Radiomaster TX16S with EdgeTX 2.5 only
+
+## What is "Range"?
+Range is an estimation of the model's distance. Technically, it is just the percentage of the RSSI from -50dBm (0% range) to the sensitivity limit for your selected packet rate (e.g. -105dBm for 500Hz) where it would indicate 100% range. Range does not account for dynamic power, so the indicated range may decrease as power goes up and increase as power goes down.
