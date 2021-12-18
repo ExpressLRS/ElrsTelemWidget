@@ -16,3 +16,6 @@ A simple widget to display ExpressLRS LinkStats telemetry as well as common Beta
   * Tap an open space and add the "ELRS Telem" widget.
   * Use the RTN / EXIT button to go back until you're on the main screen again.
   * If you forgot to Discover sensors before adding the widget, discover them and restart the handset entirely.
+
+## Requirements
+* Tested on Radiomaster TX16S with EdgeTX 2.5 only
