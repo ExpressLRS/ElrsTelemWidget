@@ -271,6 +271,16 @@ local function drawRssiLq(widget, tlm, Y)
   return Y
 end
 
+local function drawGps(widget, Y)
+  lcd.drawText(1, Y, "Lat", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.zw - 32, Y, "N/S", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.zw / 2, Y, tostring(widget.gps.lat), COLOR_THEME_SECONDARY1 + CENTER)
+
+  lcd.drawText(1, Y+TH, "Lon", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.zw - 32, Y+TH, "E/W", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.zw / 2, Y+TH, tostring(widget.gps.lon), COLOR_THEME_SECONDARY1 + CENTER)
+end
+
 local function refresh(widget, event, touchState)
   -- Runs periodically only when widget instance is visible
   -- If full screen, then event is 0 or event value, otherwise nil
@@ -282,9 +292,25 @@ local function refresh(widget, event, touchState)
   local tlm = { rssi1 = getV("1RSS") }
   if not widget.DEBUG and (tlm.rssi1 == nil or tlm.rssi1 == 0) then
     lcd.drawText(widget.zw / 2, Y, "No RX Connected", COLOR_THEME_PRIMARY1 + CENTER)
-    lcd.drawText(widget.zw / 2, Y+TH, "or sensors discovered", COLOR_THEME_SECONDARY1 + CENTER)
+    Y = Y + TH
+    if widget.gps == nil then
+      lcd.drawText(widget.zw / 2, Y, "or sensors discovered", COLOR_THEME_SECONDARY1 + CENTER)
+    else
+      if widget.size < 3 then
+        Y = Y + TH/2
+        lcd.drawText(widget.zw / 2, Y, "Last GPS position", COLOR_THEME_PRIMARY1 + CENTER + SMLSIZE)
+        Y = Y + TH
+      end
+      drawGps(widget, Y)
+    end
     widget.ctx = nil
     return
+  else
+    -- Save the GPS to be able to display it if connection is lost
+    local gps = getV("GPS")
+    if gps and gps ~= 0 then
+      widget.gps = gps
+    end
   end
 
   if widget.DEBUG then
