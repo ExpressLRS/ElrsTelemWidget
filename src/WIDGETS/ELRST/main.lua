@@ -281,6 +281,15 @@ local function drawGps(widget, Y)
   lcd.drawText(widget.zw / 2, Y+TH, tostring(widget.gps.lon), COLOR_THEME_SECONDARY1 + CENTER)
 end
 
+local function updateGps(widget)
+  -- Save the GPS to be able to display it if connection is lost
+  -- Also called as "background"
+  local gps = getV("GPS")
+  if gps and gps ~= 0 then
+    widget.gps = gps
+  end
+end
+
 local function refresh(widget, event, touchState)
   -- Runs periodically only when widget instance is visible
   -- If full screen, then event is 0 or event value, otherwise nil
@@ -306,11 +315,7 @@ local function refresh(widget, event, touchState)
     widget.ctx = nil
     return
   else
-    -- Save the GPS to be able to display it if connection is lost
-    local gps = getV("GPS")
-    if gps and gps ~= 0 then
-      widget.gps = gps
-    end
+    updateGps(widget)
   end
 
   if widget.DEBUG then
@@ -353,7 +358,7 @@ return {
   create = create,
   update = update,
   refresh = refresh,
-  background = nil,
+  background = updateGps,
   options = {
     { "Transparency", VALUE, 2, 0, 5 },
   }
