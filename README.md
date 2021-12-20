@@ -25,3 +25,19 @@ Range is an estimation of the model's distance. Technically, it is just the perc
 
 ## Can you display GPS info?
 The GPS speed, altitude and satellite count are shown on the fullscreen layout of this widget. If the model disconnects and valid GPS coordinates are available, it is displayed on the "Disconnected" mode display.
+
+## Values displayed
+| Key | Description | Notes |
+|---|---|---|
+|RFMD| Packet rate | |
+| FM | Flight mode | Merged with RFMD on some sizes |
+| TPWR | RF transmit power | Right side bar |
+| 1RSS and 2RSS | RSSI / Range | Will display 2RSS if any value ever received |
+| ANT | Active diversity antenna | Shown as symbol between 1RSS/2RSS and color |
+| RQLY | Link quality | |
+| RxBt | Receiver battery voltage | Attempts to determine per-cell voltage if possible |
+| Curr | Receiver battery current | |
+| Alt | GPS altitude | On fullscreen only |
+| GSpd | GPS speed | On fullscreen only |
+| Sats | GPS number of satellites | On fullscreen only |
+| GPS | GPS position | Only shown if disconnected and GPS data received |
