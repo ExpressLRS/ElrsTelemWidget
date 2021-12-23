@@ -116,7 +116,7 @@ local function drawVBatt(widget, tlm)
         str = string.format("%dS %.2fV", cells, tlm.vbat / cells)
       end
     else
-      str = tostring(tlm.vbat) .. "V"
+      str = string.format("%.2fV", tlm.vbat)
     end
   else
     str = "  --"
