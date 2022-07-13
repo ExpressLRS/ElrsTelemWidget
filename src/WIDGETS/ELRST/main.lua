@@ -5,7 +5,10 @@
 
 local TH = 18
 
-local vcache
+-- Variables used across all instances
+local vcache -- valueId cache
+local mod = {} -- module info
+
 local function getV(id)
   -- Return the getValue of ID or nil if it does not exist
   local cid = vcache[id]
@@ -166,8 +169,7 @@ end
 local function drawRange(widget, tlm, Y)
   -- returns size of range bar drawn (0 if range pie)
   local rssi = (tlm.ant == 1) and tlm.rssi2 or tlm.rssi1
-  local RFRSSI = {-128, -123, -117, -117, -112, -112, -108, -105}
-  local minrssi = RFRSSI[tlm.rfmd+1] -- note 50Hz uses 2.4 limit
+  local minrssi = (mod.RFRSSI and mod.RFRSSI[tlm.rfmd+1]) or -128
   if rssi > -50 then rssi = -50 end
   local rangePct = 100 * (rssi + 50) / (minrssi + 50)
   local rangePctStr = string.format("%d%%", rangePct)
@@ -218,20 +220,19 @@ local function updateWidgetSize(widget, event)
 end
 
 local function drawRfModeText(widget, tlm, Y)
-  local RFHZ = {"4", "25", "50", "100", "150", "200", "250", "500"}
-  local modestr = RFHZ[tlm.rfmd+1]
+  local modestr = (mod.RFMOD and mod.RFMOD[tlm.rfmd+1]) or ("RFMD" .. tostring(tlm.rfmd))
   if widget.size < 3 then tlm.fmode = getV("FM") end
 
   -- For 3up/4up widgets, condense the LQ into the modestr
   if widget.size > 2 then
-    modestr = modestr .. string.format("Hz LQ %d%%", tlm.rqly)
+    modestr = string.format("%s LQ %d%%", modestr, tlm.rqly)
   else
     local fmodestr
     -- For 2up, flight mode goes in the Rf mode if available
     if widget.size == 2 and tlm.fmode ~= nil then
-      fmodestr = "Hz " .. tlm.fmode .. " Mode"
+      fmodestr = " " .. tlm.fmode .. " Mode"
     end
-    modestr = modestr .. (fmodestr or "Hz Connected")
+    modestr = modestr .. (fmodestr or " Connected")
   end
   lcd.drawText(widget.zw / 2 - 6, Y, modestr, COLOR_THEME_PRIMARY1 + CENTER)
 
@@ -290,10 +291,63 @@ local function updateGps(widget)
   end
 end
 
+local function fieldGetString(data, off)
+  local startOff = off
+  while data[off] ~= 0 do
+    data[off] = string.char(data[off])
+    off = off + 1
+  end
+
+  return table.concat(data, nil, startOff, off - 1), off + 1
+end
+
+local function parseDeviceInfo(data)
+  if data[2] ~= 0xEE then return end -- only interested in TX info
+  local name, off = fieldGetString(data, 3)
+  mod.name = name
+  -- off = serNo ('ELRS') off+4 = hwVer off+8 = swVer
+  mod.vMaj = data[off+9]
+  mod.vMin = data[off+10]
+  mod.vRev = data[off+11]
+  mod.vStr = string.format("%s (%d.%d.%d)",
+    mod.name, mod.vMaj, mod.vMin, mod.vRev)
+  if mod.vMaj == 3 then
+    mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "250Hz", "333HzFull", "500Hz", "D250", "D500", "F500", "F1000" }
+   -- Note: Always use 2.4 limits
+    mod.RFRSSI = {-128, -123, -115, -117, -112, -112, -112, -108, -105, -105, -104, -104, -104, -104}
+  else
+    mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "150Hz", "200Hz", "250Hz", "500Hz"}
+    mod.RFRSSI = {-128, -123, -115, -117, -112, -112, -108, -105}
+  end
+  return true
+end
+
+local function updateElrsVer()
+  local command, data = crossfireTelemetryPop()
+  if command == 0x29 then
+    if parseDeviceInfo(data) then
+      -- Get rid of all the functions, only update once
+      parseDeviceInfo = nil
+      fieldGetString = nil
+      updateElrsVer = nil
+      mod.lastUpd = nil
+    end
+    return
+  end
+
+  local now = getTime()
+  -- Poll the module every second
+  if (mod.lastUpd or 0) + 100 < now then
+    crossfireTelemetryPush(0x28, {0x00, 0xEA})
+    mod.lastUpd = now
+  end
+end
+
 local function refresh(widget, event, touchState)
   -- Runs periodically only when widget instance is visible
   -- If full screen, then event is 0 or event value, otherwise nil
   --print(tostring(widget.zone.w) .. "x" .. tostring(widget.zone.h))
+  if updateElrsVer then updateElrsVer() end
   updateWidgetSize(widget, event)
   lcd.drawFilledRectangle(0, 0, widget.zw, widget.zh, COLOR_THEME_PRIMARY2, 3 * widget.cfg.Transparency)
   local Y = 1
@@ -303,7 +357,8 @@ local function refresh(widget, event, touchState)
     lcd.drawText(widget.zw / 2, Y, "No RX Connected", COLOR_THEME_PRIMARY1 + CENTER)
     Y = Y + TH
     if widget.gps == nil then
-      lcd.drawText(widget.zw / 2, Y, "or sensors discovered", COLOR_THEME_SECONDARY1 + CENTER)
+      local txName = mod.vStr or "or sensors discovered"
+      lcd.drawText(widget.zw / 2, Y, txName, COLOR_THEME_SECONDARY1 + CENTER)
     else
       if widget.size < 3 then
         Y = Y + TH/2
