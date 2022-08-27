@@ -221,7 +221,7 @@ end
 
 local function drawRfModeText(widget, tlm, Y)
   local modestr = (mod.RFMOD and mod.RFMOD[tlm.rfmd+1]) or ("RFMD" .. tostring(tlm.rfmd))
-  if widget.size < 3 then tlm.fmode = getV("FM") end
+  if widget.size < 3 then tlm.fmode = getV("FM") or 0 end
 
   -- For 3up/4up widgets, condense the LQ into the modestr
   if widget.size > 2 then
@@ -229,7 +229,7 @@ local function drawRfModeText(widget, tlm, Y)
   else
     local fmodestr
     -- For 2up, flight mode goes in the Rf mode if available
-    if widget.size == 2 and tlm.fmode ~= nil then
+    if widget.size == 2 and tlm.fmode ~= 0 then
       fmodestr = " " .. tlm.fmode .. " Mode"
     end
     modestr = modestr .. (fmodestr or " Connected")
