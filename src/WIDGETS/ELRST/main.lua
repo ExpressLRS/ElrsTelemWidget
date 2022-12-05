@@ -1,5 +1,5 @@
---196x170 right half
---392x85 top half
+--196x169 right half
+--392x84 top half
 --196x56 1 + 3
 --196x42 1 + 4
 
@@ -208,9 +208,9 @@ local function updateWidgetSize(widget, event)
 
   widget.zw = widget.zone.w
   widget.zh = widget.zone.h
-  if widget.zh >= 170 then
+  if widget.zh >= 169 then
     widget.size = 1 -- 1x widget
-  elseif widget.zh >= 85 then
+  elseif widget.zh >= 84 then
     widget.size = 2 -- 2x widget
   elseif widget.zh >= 56 then
     widget.size = 3 -- 3x widget
