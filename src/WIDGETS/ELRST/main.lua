@@ -353,7 +353,9 @@ local function refresh(widget, event, touchState)
   local Y = 1
 
   local tlm = { rssi1 = getV("1RSS") }
-  if not widget.DEBUG and (tlm.rssi1 == nil or tlm.rssi1 == 0) then
+  -- True diversity receivers sometimes only report one of the RSSI values, so we need to check both
+  local rssi2 = getV("2RSS")
+  if not widget.DEBUG and ((tlm.rssi1 == nil or tlm.rssi1 == 0) and (rssi2 == nil or rssi2 == 0)) then
     lcd.drawText(widget.zw / 2, Y, "No RX Connected", COLOR_THEME_PRIMARY1 + CENTER)
     Y = Y + TH
     if widget.gps == nil then
