@@ -352,8 +352,8 @@ local function refresh(widget, event, touchState)
   lcd.drawFilledRectangle(0, 0, widget.zw, widget.zh, COLOR_THEME_PRIMARY2, 3 * widget.cfg.Transparency)
   local Y = 1
 
-  local tlm = { rssi1 = getV("1RSS") }
-  if not widget.DEBUG and (tlm.rssi1 == nil or tlm.rssi1 == 0) then
+  local tlm = { tpwr = getV("TPWR") }
+  if not widget.DEBUG and (tlm.tpwr == nil or tlm.tpwr == 0) then
     lcd.drawText(widget.zw / 2, Y, "No RX Connected", COLOR_THEME_PRIMARY1 + CENTER)
     Y = Y + TH
     if widget.gps == nil then
@@ -376,7 +376,7 @@ local function refresh(widget, event, touchState)
   if widget.DEBUG then
     tlm.rfmd = 7 tlm.rssi1 = -87 tlm.rssi2 = -93 tlm.rqly = 99 tlm.ant = 1 tlm.tpwr = 50
   else
-    tlm.rfmd = getV("RFMD") tlm.rssi2 = getV("2RSS") tlm.rqly = getV("RQly") tlm.ant = getV("ANT") tlm.tpwr = getV("TPWR")
+    tlm.rfmd = getV("RFMD") tlm.rssi1 = getV("1RSS") tlm.rssi2 = getV("2RSS") tlm.rqly = getV("RQly") tlm.ant = getV("ANT")
   end
   if widget.ctx == nil then
     widget.ctx = {}
