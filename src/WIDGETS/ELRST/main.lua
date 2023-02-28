@@ -259,7 +259,7 @@ local function drawRssiLq(widget, tlm, Y)
     -- LQ on separate line
     lcd.drawText(1, Y + 1, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
     -- FMode
-    if tlm.fmode then
+    if tlm.fmode and tlm.fmode ~= 0 then
       -- 1up on the right, fullscreen in the center
       if widget.size == 1 then
         lcd.drawText(widget.zw - 13, Y + 1, tlm.fmode, COLOR_THEME_SECONDARY1 + RIGHT)
