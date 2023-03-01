@@ -208,9 +208,9 @@ local function updateWidgetSize(widget, event)
 
   widget.zw = widget.zone.w
   widget.zh = widget.zone.h
-  if widget.zh >= 169 then
+  if widget.zh >= 150 then
     widget.size = 1 -- 1x widget
-  elseif widget.zh >= 84 then
+  elseif widget.zh >= 75 then
     widget.size = 2 -- 2x widget
   elseif widget.zh >= 56 then
     widget.size = 3 -- 3x widget
@@ -248,17 +248,17 @@ local function drawRssiLq(widget, tlm, Y)
     lcd.drawText(1, widget.zh - 18, tostring(rssi) .. "dBm", COLOR_THEME_PRIMARY3)
   elseif widget.size > 1 then
     lcd.drawText(1, Y, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
-    drawDiverSym(73, Y, widget.ctx.isDiversity and tlm.ant)
+    drawDiverSym(72, Y, widget.ctx.isDiversity and tlm.ant)
     lcd.drawText(83, Y, "Signal " .. tostring(rssi), COLOR_THEME_SECONDARY1)
     lcd.drawText(widget.zw - 13, Y+3, "dBm", SMLSIZE + COLOR_THEME_SECONDARY1 + RIGHT)
   else
     lcd.drawText(1, Y, "Signal", COLOR_THEME_SECONDARY1)
-    lcd.drawText(44, Y+2, "(dBm)", SMLSIZE + COLOR_THEME_SECONDARY1)
+    lcd.drawText(46, Y+2, "(dBm)", SMLSIZE + COLOR_THEME_SECONDARY1)
     drawDbms(82, Y, tlm.rssi1, tlm.rssi2, widget.ctx.isDiversity and tlm.ant)
     Y = Y + TH
     -- LQ on separate line
     lcd.drawText(1, Y + 1, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
-    -- FMode
+    -- FMode on LQ line
     if tlm.fmode and tlm.fmode ~= 0 then
       -- 1up on the right, fullscreen in the center
       if widget.size == 1 then
@@ -394,10 +394,10 @@ local function refresh(widget, event, touchState)
 
   -- TX Power
   if widget.size < 4 then
-    lcd.drawText(widget.zw - 13, widget.zh - 30, "Power", SMLSIZE + RIGHT + COLOR_THEME_SECONDARY2 + SHADOWED)
-    lcd.drawText(widget.zw - 13, widget.zh - 18, tostring(tlm.tpwr) .. "mW", RIGHT + COLOR_THEME_PRIMARY3)
+    lcd.drawText(widget.zw - 15, widget.zh - 30, "Power", SMLSIZE + RIGHT + COLOR_THEME_SECONDARY2 + SHADOWED)
+    lcd.drawText(widget.zw - 14, widget.zh - 18, tostring(tlm.tpwr) .. "mW", RIGHT + COLOR_THEME_PRIMARY3)
   else
-    lcd.drawText(widget.zw - 13, widget.zh - 15, tostring(tlm.tpwr) .. "mW", SMLSIZE + RIGHT + COLOR_THEME_PRIMARY3)
+    lcd.drawText(widget.zw - 15, widget.zh - 15, tostring(tlm.tpwr) .. "mW", SMLSIZE + RIGHT + COLOR_THEME_PRIMARY3)
   end
   drawPowerLvl(0, 6, 6, tlm.tpwr, widget.zw, widget.zh) -- uses 1W as max
 
