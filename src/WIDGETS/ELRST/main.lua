@@ -171,14 +171,21 @@ local function drawRange(widget, tlm, Y)
   local rssi = (tlm.ant == 1) and tlm.rssi2 or tlm.rssi1
   local minrssi = (mod.RFRSSI and mod.RFRSSI[tlm.rfmd+1]) or -128
   if rssi > -50 then rssi = -50 end
-  local rangePct = 100 * (rssi + 50) / (minrssi + 50)
-  local rangePctStr = string.format("%d%%", rangePct)
+  local rangePct = math.floor(100 * (rssi + 50) / (minrssi + 50) + 0.5)
+  -- Smooth out the transition between current and previous pct
+  local smoorng = widget.ctx.smoothRng or rangePct
+  if rangePct > smoorng then
+    rangePct = smoorng + ((rangePct > smoorng + 8) and 4 or 1)
+  elseif rangePct < smoorng then
+    rangePct = smoorng - ((rangePct < smoorng - 8) and 4 or 1)
+  end
+  widget.ctx.smoothRng = rangePct
   local rangeClr = (rangePct > 80) and COLOR_THEME_WARNING or (rangePct > 40) and COLOR_THEME_SECONDARY2 or COLOR_THEME_SECONDARY1
 
   -- Range Bar (for anyting except full height)
   if widget.size > 1 then
     lcd.drawGauge(1, Y, widget.zw - 15, 15, rangePct, 100, COLOR_THEME_SECONDARY1)
-    lcd.drawText(widget.zw / 2 - 6, Y - 2, "Range " .. rangePctStr, SMLSIZE + CENTER + rangeClr)
+    lcd.drawText(widget.zw / 2 - 6, Y - 2, "Range " .. tostring(rangePct), SMLSIZE + CENTER + rangeClr)
     return Y + 14
   end
 
@@ -192,7 +199,7 @@ local function drawRange(widget, tlm, Y)
   end
 
   lcd.drawText(cx + (cr * -0.70), cy + cr - 15, "Range", SMLSIZE + RIGHT + rangeClr + SHADOWED)
-  lcd.drawText(cx + (cr * 0.85), cy + cr - 15, rangePctStr, SMLSIZE + rangeClr + SHADOWED)
+  lcd.drawText(cx + (cr * 0.85), cy + cr - 15, tostring(rangePct), SMLSIZE + rangeClr + SHADOWED)
   lcd.drawCircle(cx, cy, cr, COLOR_THEME_PRIMARY3)
 
   return Y
