@@ -1,6 +1,8 @@
-### No, you can't use this widget to configure your TX module, don't ask!
+A collection of lua scripts to extend the functionality of an EdgeTX when working with ExpressLRS. Below describes the GUI widget, but the [wiki](https://github.com/ExpressLRS/ElrsTelemWidget/wiki/) has more information about any other scripts in this repository.
 
-A simple widget to display ExpressLRS LinkStats telemetry as well as common Betaflight and iNav flight controller telemetry.
+### No, you can't use this widget to configure your TX module!
+
+The simple widget displays ExpressLRS LinkStats telemetry as well as common Betaflight and iNav flight controller telemetry.
 
 ![widget screenshot](docs/images/screen-2-1.png)
 
