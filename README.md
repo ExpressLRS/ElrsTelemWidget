@@ -19,6 +19,14 @@ The simple widget displays ExpressLRS LinkStats telemetry as well as common Beta
   * Use the RTN / EXIT button to go back until you're on the main screen again.
   * If you forgot to Discover sensors before adding the widget, discover them and restart the handset entirely.
 
+# Function Scripts
+
+To be attached to "Special Functions" to allow binding on switch.
+
+* ELRSb.lua - Force TX to send Bind command
+* ELRSu.lua - Force RX to enter Bind mode (only if connected obviously)
+* ELRSt.lua - Toggle. Enter Bind mode if connected, send Bind command if not connected
+
 ## Requirements
 * Tested on Radiomaster TX16S with EdgeTX 2.5 only
 
