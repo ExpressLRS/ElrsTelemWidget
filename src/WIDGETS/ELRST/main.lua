@@ -344,19 +344,23 @@ local function updateElrsVer()
   if command == 0x29 then
     if parseDeviceInfo(data) then
       -- Get rid of all the functions, only update once
-      parseDeviceInfo = nil
-      fieldGetString = nil
-      updateElrsVer = nil
-      mod.lastUpd = nil
+      --parseDeviceInfo = nil
+      --fieldGetString = nil
+      --updateElrsVer = nil
+      mod.lastDevPoll = nil
     end
     return
   end
 
+  -- Stop polling after the first device is loaded
+  -- EdgeTX 2.11+ does its own polling, rely on that to change devices after the first time
+  if mod.name then return end
+
   local now = getTime()
   -- Poll the module every second
-  if (mod.lastUpd or 0) + 100 < now then
+  if now - (mod.lastDevPoll or 0) > 100 then
     crossfireTelemetryPush(0x28, {0x00, 0xEA})
-    mod.lastUpd = now
+    mod.lastDevPoll = now
   end
 end
 
