@@ -1,6 +1,8 @@
-### No, you can't use this widget to configure your TX module, don't ask!
+A collection of lua scripts to extend the functionality of an EdgeTX when working with ExpressLRS. Below describes the GUI widget, but the [wiki](https://github.com/ExpressLRS/ElrsTelemWidget/wiki/) has more information about any other scripts in this repository.
 
-A simple widget to display ExpressLRS LinkStats telemetry as well as common Betaflight and iNav flight controller telemetry.
+### No, you can't use this widget to configure your TX module!
+
+The simple widget displays ExpressLRS LinkStats telemetry as well as common Betaflight and iNav flight controller telemetry.
 
 ![widget screenshot](docs/images/screen-2-1.png)
 
@@ -16,6 +18,14 @@ A simple widget to display ExpressLRS LinkStats telemetry as well as common Beta
   * Tap an open space and add the "ELRS Telem" widget.
   * Use the RTN / EXIT button to go back until you're on the main screen again.
   * If you forgot to Discover sensors before adding the widget, discover them and restart the handset entirely.
+
+# Function Scripts
+
+To be attached to "Special Functions" to allow binding on switch.
+
+* ELRSb.lua - Force TX to send Bind command
+* ELRSu.lua - Force RX to enter Bind mode (only if connected obviously)
+* ELRSt.lua - Toggle. Enter Bind mode if connected, send Bind command if not connected
 
 ## Requirements
 * Tested on Radiomaster TX16S with EdgeTX 2.5 only

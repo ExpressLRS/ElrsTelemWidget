@@ -1,0 +1,14 @@
+-- TNS|ELRS Bind|TNE
+return { run = function (event)
+    local CRSF_FRAMETYPE_COMMAND = 0x32
+    local CRSF_ADDRESS_RADIO_TRANSMITTER = 0xEA
+    local CRSF_ADDRESS_CRSF_TRANSMITTER = 0xEE
+    local CRSF_COMMAND_SUBCMD_RX = 0x10
+    local CRSF_COMMAND_SUBCMD_RX_BIND = 0x01
+
+    local dest = CRSF_ADDRESS_CRSF_TRANSMITTER
+    crossfireTelemetryPush(CRSF_FRAMETYPE_COMMAND,
+        { dest, CRSF_ADDRESS_RADIO_TRANSMITTER, CRSF_COMMAND_SUBCMD_RX, CRSF_COMMAND_SUBCMD_RX_BIND }
+    )
+    return 1
+end }
