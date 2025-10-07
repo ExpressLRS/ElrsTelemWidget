@@ -319,7 +319,16 @@ local function parseDeviceInfo(data)
   mod.vRev = data[off+11]
   mod.vStr = string.format("%s (%d.%d.%d)",
     mod.name, mod.vMaj, mod.vMin, mod.vRev)
-  if mod.vMaj == 3 then
+  if mod.vMaj == 4 then
+    mod.RFMOD = {"25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "200HzFull", "250Hz", "333HzFull", "500Hz", "D50", "K1000Full", -- Team900
+                [21]="25Hz", [22]="50Hz", [23]="100Hz", [24]="100HzFull", [25]="150Hz", [26]="200Hz", [27]="200HzFull", [28]="250Hz", [29]="333HzFull", [30]="500Hz", -- Team2.4
+                [31]="D250", [32]="D500", [33]="F500", [34]="F1000", [35]="DK250", [36]="DK500", [37]="K1000", -- Team2.4
+                [101]="X100Full", [102]="X150"} -- GemX
+    mod.RFRSSI = {-123, -120, -117, -112, 0, -112, -111, -111, 0, 0, -112, -101,
+                [21]=0, [22]=-115, [23]=0, [24]=-112, [25]=-112, [26]=0, [27]=0, [28]=-108, [29]=-105, [30]=-105,
+                [31]=-104, [32]=-104, [33]=-104, [34]=-104, [35]=-103, [36]=-103, [37]=-103,
+                [101]=-112, [102]=-112}
+  elseif mod.vMaj == 3 then
     mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "250Hz", "333HzFull", "500Hz", "D250", "D500", "F500", "F1000" }
    -- Note: Always use 2.4 limits
     mod.RFRSSI = {-128, -123, -115, -117, -112, -112, -112, -108, -105, -105, -104, -104, -104, -104}
@@ -335,19 +344,23 @@ local function updateElrsVer()
   if command == 0x29 then
     if parseDeviceInfo(data) then
       -- Get rid of all the functions, only update once
-      parseDeviceInfo = nil
-      fieldGetString = nil
-      updateElrsVer = nil
-      mod.lastUpd = nil
+      --parseDeviceInfo = nil
+      --fieldGetString = nil
+      --updateElrsVer = nil
+      mod.lastDevPoll = nil
     end
     return
   end
 
+  -- Stop polling after the first device is loaded
+  -- EdgeTX 2.11+ does its own polling, rely on that to change devices after the first time
+  if mod.name then return end
+
   local now = getTime()
   -- Poll the module every second
-  if (mod.lastUpd or 0) + 100 < now then
+  if now - (mod.lastDevPoll or 0) > 100 then
     crossfireTelemetryPush(0x28, {0x00, 0xEA})
-    mod.lastUpd = now
+    mod.lastDevPoll = now
   end
 end
 
