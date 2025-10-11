@@ -1,4 +1,8 @@
+# ExpressLRS Telemetry Widget
+
 A collection of lua scripts to extend the functionality of an EdgeTX when working with ExpressLRS. Below describes the GUI widget, but the [wiki](https://github.com/ExpressLRS/ElrsTelemWidget/wiki/) has more information about any other scripts in this repository.
+
+Developed and maintained by **ExpressLRS LLC** and its passionate open source community, working together to advance reliable, high-performance radio control technology.
 
 ### No, you can't use this widget to configure your TX module!
 
