@@ -11,6 +11,16 @@ return { run = function (event)
     local CRSF_COMMAND_SUBCMD_RX_BIND = 0x01
 
     local isConnected = function ()
+        -- Try to get the LQ telemetry item we're connected if LQ <> 0
+        local fld = getFieldInfo("RQly")
+        if fld then return getValue(fld.id) > 0 end
+
+        -- User has not discovered telemetry, poll the TX instead. This has
+        -- the downside of creating a telemetry queue that can't be deleted
+
+        -- Clear any previously queued messages
+        while crossfireTelemetryPop() ~= nil do end
+        -- Send status request
         crossfireTelemetryPush(CRSF_FRAMETYPE_PARAMETER_WRITE,
             { CRSF_ADDRESS_CRSF_TRANSMITTER, CRSF_ADDRESS_ELRS_LUA, 0x00, 0x00 })
 
@@ -18,10 +28,9 @@ return { run = function (event)
         local start = getTime()
         while getTime() - start < 10 do
             local command, data = crossfireTelemetryPop()
-            if command == CRSF_FRAMETYPE_ELRS_STATUS then
+            if command == CRSF_FRAMETYPE_ELRS_STATUS and data[2] == CRSF_ADDRESS_CRSF_TRANSMITTER then
                 -- IsConnected is the low bit of the flags byte
-                return data[2] == CRSF_ADDRESS_CRSF_TRANSMITTER
-                    and bit32.btest(data[6], 1)
+                return bit32.btest(data[6], 1)
             end
         end
     end
