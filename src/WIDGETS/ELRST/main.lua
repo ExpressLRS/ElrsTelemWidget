@@ -34,6 +34,17 @@ local function create(zone, options)
   return widget
 end
 
+local function computeLayout(widget)
+  widget.margin = math.max(2, math.floor(widget.zw * 0.02))
+  widget.rightX = widget.zw - widget.margin
+  widget.centerX = widget.zw / 2
+  widget.gaugeW = math.max(100, widget.zw - widget.margin - 15)
+  widget.barW = math.max(10, math.floor(widget.zw * 0.015))
+  widget.pieRadius = math.floor(math.min(widget.zw, widget.zh) * 0.22)
+  widget.rssiX = math.floor(widget.zw * 0.28)
+  widget.dbmX = math.floor(widget.zw * 0.55)
+end
+
 local function update(widget, options)
   -- Runs if options are changed from the Widget Settings menu
   widget.cfg = options
@@ -48,7 +59,7 @@ local function pwrToIdx(powval)
 end
 
 local function drawPowerLvl(minp, cfgp, maxp, curp, zw, zh)
-  local barW = 12
+  local barW = math.max(10, math.floor(zw * 0.015))
   local itemH = (zh - 5) / (maxp - minp)
   lcd.drawRectangle(zw - barW - 1, 1, barW, zh - 2)
   --lcd.drawFilledRectangle(zw - barW, 2, barW - 2, itemH * (maxp - cfgp) - 1, COLOR_THEME_DISABLED) -- power beyond cfgpower
@@ -130,31 +141,31 @@ end
 local function drawCurrent(widget, tlm)
   tlm.curr = getV("Curr")
   if tlm.curr == nil then return end
-  lcd.drawText(widget.zw / 2 - 6, widget.zh - 30, "Current", SMLSIZE + COLOR_THEME_SECONDARY2 + SHADOWED + CENTER)
-
+  lcd.drawText(widget.centerX - 6, widget.zh - 30, "Current", SMLSIZE + COLOR_THEME_SECONDARY2 + SHADOWED + CENTER)
+  
   local str
   if tlm.curr > 0 then
     str = string.format("%.2fA", tlm.curr)
   else
     str = "--"
   end
-  lcd.drawText(widget.zw / 2 - 6, widget.zh - 18, str, COLOR_THEME_PRIMARY3 + CENTER)
+  lcd.drawText(widget.centerX - 6, widget.zh - 18, str, COLOR_THEME_PRIMARY3 + CENTER)
 end
 
-local function drawGps(widget, tlm, Y)
+local function drawGpsTelemetry(widget, tlm, Y)
   tlm.sats = getV("Sats")
   if tlm.sats == nil then return end
   -- Number of sats
-  lcd.drawText(widget.zw - 13, Y, tostring(tlm.sats) .. " sats", COLOR_THEME_SECONDARY1 + RIGHT)
+  lcd.drawText(widget.rightX - 13, Y, tostring(tlm.sats) .. " sats", COLOR_THEME_SECONDARY1 + RIGHT)
 
   Y = Y + TH
   tlm.gspd = getV("GSpd")
   if tlm.gspd ~= nil then
-    lcd.drawText(1, Y, string.format("Speed %.1f", tlm.gspd), COLOR_THEME_SECONDARY1)
+    lcd.drawText(widget.margin, Y, string.format("Speed %.1f", tlm.gspd), COLOR_THEME_SECONDARY1)
   end
   tlm.alt = getV("Alt")
   if tlm.alt ~= nil then
-    lcd.drawText(widget.zw - 13, Y, "Alt " .. tostring(tlm.alt), COLOR_THEME_SECONDARY1 + RIGHT)
+    lcd.drawText(widget.rightX - 13, Y, "Alt " .. tostring(tlm.alt), COLOR_THEME_SECONDARY1 + RIGHT)
   end
 end
 
@@ -162,7 +173,7 @@ local function drawFcTelem(widget, tlm, Y)
   drawVBatt(widget, tlm)
   drawCurrent(widget, tlm)
   if widget.size == 0 then
-    drawGps(widget, tlm, Y)
+    drawGpsTelemetry(widget, tlm, Y)
   end
 end
 
@@ -180,18 +191,18 @@ local function drawRange(widget, tlm, Y)
     rangePct = smoorng - ((rangePct < smoorng - 8) and 4 or 1)
   end
   widget.ctx.smoothRng = rangePct
-  local rangePctStr = string.format("%d%%", rangePct)
   local rangeClr = (rangePct > 80) and COLOR_THEME_WARNING or (rangePct > 40) and COLOR_THEME_SECONDARY2 or COLOR_THEME_SECONDARY1
 
   -- Range Bar (for anyting except full height)
   if widget.size > 1 then
-    lcd.drawGauge(1, Y, widget.zw - 15, 15, rangePct, 100, COLOR_THEME_SECONDARY1)
-    lcd.drawText(widget.zw / 2 - 6, Y - 2, "Range " .. rangePctStr, SMLSIZE + CENTER + rangeClr)
+    lcd.drawGauge(1, Y, widget.gaugeW, 15, rangePct, 100, COLOR_THEME_SECONDARY1)
+    lcd.drawText(widget.centerX - 6, Y - 2, "Range " .. tostring(rangePct), SMLSIZE + CENTER + rangeClr)
     return Y + 14
   end
 
   -- Range Pie (for full height only)
-  local cx, cy, cr = widget.zw / 2 - 6, widget.zh / 2 + 10, widget.zw / 6
+  local cr = widget.pieRadius
+  local cx, cy = widget.centerX - 6, widget.zh / 2 + 10
   local firstH = (rangePct >= 50) and 180 or rangePct * 180 / 50
   lcd.drawPie(cx, cy, cr, 180, 180 + firstH, COLOR_THEME_SECONDARY1)
   if rangePct > 50 then
@@ -200,7 +211,7 @@ local function drawRange(widget, tlm, Y)
   end
 
   lcd.drawText(cx + (cr * -0.70), cy + cr - 15, "Range", SMLSIZE + RIGHT + rangeClr + SHADOWED)
-  lcd.drawText(cx + (cr * 0.85), cy + cr - 15, rangePctStr, SMLSIZE + rangeClr + SHADOWED)
+  lcd.drawText(cx + (cr * 0.85), cy + cr - 15, tostring(rangePct), SMLSIZE + rangeClr + SHADOWED)
   lcd.drawCircle(cx, cy, cr, COLOR_THEME_PRIMARY3)
 
   return Y
@@ -211,6 +222,7 @@ local function updateWidgetSize(widget, event)
     widget.size = 0 -- fullscreen
     widget.zw = LCD_W
     widget.zh = LCD_H
+    computeLayout(widget)
     return
   end
 
@@ -225,6 +237,7 @@ local function updateWidgetSize(widget, event)
   else -- 42
     widget.size = 4 -- 4x widget
   end
+  computeLayout(widget)
 end
 
 local function drawRfModeText(widget, tlm, Y)
@@ -242,7 +255,7 @@ local function drawRfModeText(widget, tlm, Y)
     end
     modestr = modestr .. (fmodestr or " Connected")
   end
-  lcd.drawText(widget.zw / 2 - 6, Y, modestr, COLOR_THEME_PRIMARY1 + CENTER)
+  lcd.drawText(widget.centerX - 6, Y, modestr, COLOR_THEME_PRIMARY1 + CENTER)
 
   return Y + TH
 end
@@ -252,17 +265,17 @@ local function drawRssiLq(widget, tlm, Y)
   if widget.size > 3 then
     lcd.drawText(1, widget.zh - 15, tostring(rssi) .. "dBm", SMLSIZE + COLOR_THEME_PRIMARY3)
   elseif widget.size > 2 then
-    lcd.drawText(1, widget.zh - 30, "RSSI", SMLSIZE + COLOR_THEME_SECONDARY2 + SHADOWED)
-    lcd.drawText(1, widget.zh - 18, tostring(rssi) .. "dBm", COLOR_THEME_PRIMARY3)
+    lcd.drawText(widget.margin, widget.zh - 30, "RSSI", SMLSIZE + COLOR_THEME_SECONDARY2 + SHADOWED)
+    lcd.drawText(widget.margin, widget.zh - 18, tostring(rssi) .. "dBm", COLOR_THEME_PRIMARY3)
   elseif widget.size > 1 then
-    lcd.drawText(1, Y, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
-    drawDiverSym(72, Y, widget.ctx.isDiversity and tlm.ant)
-    lcd.drawText(83, Y, "Signal " .. tostring(rssi), COLOR_THEME_SECONDARY1)
-    lcd.drawText(widget.zw - 13, Y+3, "dBm", SMLSIZE + COLOR_THEME_SECONDARY1 + RIGHT)
+    lcd.drawText(widget.margin, Y, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
+    drawDiverSym(widget.rssiX, Y, widget.ctx.isDiversity and tlm.ant)
+    lcd.drawText(widget.rssiX + 11, Y, "Signal " .. tostring(rssi), COLOR_THEME_SECONDARY1)
+    lcd.drawText(widget.rightX - 13, Y+3, "dBm", SMLSIZE + COLOR_THEME_SECONDARY1 + RIGHT)
   else
-    lcd.drawText(1, Y, "Signal", COLOR_THEME_SECONDARY1)
-    lcd.drawText(46, Y+2, "(dBm)", SMLSIZE + COLOR_THEME_SECONDARY1)
-    drawDbms(82, Y, tlm.rssi1, tlm.rssi2, widget.ctx.isDiversity and tlm.ant)
+    lcd.drawText(widget.margin, Y, "Signal", COLOR_THEME_SECONDARY1)
+    lcd.drawText(widget.rssiX, Y+2, "(dBm)", SMLSIZE + COLOR_THEME_SECONDARY1)
+    drawDbms(widget.dbmX, Y, tlm.rssi1, tlm.rssi2, widget.ctx.isDiversity and tlm.ant)
     Y = Y + TH
     -- LQ on separate line
     lcd.drawText(1, Y + 1, "LQ " .. tostring(tlm.rqly) .. "%", COLOR_THEME_SECONDARY1)
@@ -270,9 +283,9 @@ local function drawRssiLq(widget, tlm, Y)
     if tlm.fmode and tlm.fmode ~= 0 then
       -- 1up on the right, fullscreen in the center
       if widget.size == 1 then
-        lcd.drawText(widget.zw - 13, Y + 1, tlm.fmode, COLOR_THEME_SECONDARY1 + RIGHT)
+        lcd.drawText(widget.rightX - 13, Y + 1, tlm.fmode, COLOR_THEME_SECONDARY1 + RIGHT)
       else
-        lcd.drawText(widget.zw / 2, Y + 1, tlm.fmode .. " Mode", COLOR_THEME_SECONDARY1 + CENTER)
+        lcd.drawText(widget.centerX, Y + 1, tlm.fmode .. " Mode", COLOR_THEME_SECONDARY1 + CENTER)
       end
     end -- if fmode
   end
@@ -280,14 +293,14 @@ local function drawRssiLq(widget, tlm, Y)
   return Y
 end
 
-local function drawGps(widget, Y)
+local function drawGpsPos(widget, Y)
   lcd.drawText(1, Y, "Lat", COLOR_THEME_DISABLED)
-  lcd.drawText(widget.zw - 32, Y, "N/S", COLOR_THEME_DISABLED)
-  lcd.drawText(widget.zw / 2, Y, tostring(widget.gps.lat), COLOR_THEME_SECONDARY1 + CENTER)
+  lcd.drawText(widget.rightX - 32, Y, "N/S", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.centerX, Y, tostring(widget.gps.lat), COLOR_THEME_SECONDARY1 + CENTER)
 
   lcd.drawText(1, Y+TH, "Lon", COLOR_THEME_DISABLED)
-  lcd.drawText(widget.zw - 32, Y+TH, "E/W", COLOR_THEME_DISABLED)
-  lcd.drawText(widget.zw / 2, Y+TH, tostring(widget.gps.lon), COLOR_THEME_SECONDARY1 + CENTER)
+  lcd.drawText(widget.rightX - 32, Y+TH, "E/W", COLOR_THEME_DISABLED)
+  lcd.drawText(widget.centerX, Y+TH, tostring(widget.gps.lon), COLOR_THEME_SECONDARY1 + CENTER)
 end
 
 local function updateGps(widget)
@@ -319,24 +332,13 @@ local function parseDeviceInfo(data)
   mod.vRev = data[off+11]
   mod.vStr = string.format("%s (%d.%d.%d)",
     mod.name, mod.vMaj, mod.vMin, mod.vRev)
-  if mod.vMaj == 4 then
-    mod.RFMOD = {"25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "200HzFull", "250Hz", "333HzFull", "500Hz", "D50", "K1000Full", -- Team900
-                [21]="25Hz", [22]="50Hz", [23]="100Hz", [24]="100HzFull", [25]="150Hz", [26]="200Hz", [27]="200HzFull", [28]="250Hz", [29]="333HzFull", [30]="500Hz", -- Team2.4
-                [31]="D250", [32]="D500", [33]="F500", [34]="F1000", [35]="DK250", [36]="DK500", [37]="K1000", -- Team2.4
-                [101]="X100Full", [102]="X150"} -- GemX
-    mod.RFRSSI = {-123, -120, -117, -112, 0, -112, -111, -111, 0, 0, -112, -101,
-                [21]=0, [22]=-115, [23]=0, [24]=-112, [25]=-112, [26]=0, [27]=0, [28]=-108, [29]=-105, [30]=-105,
-                [31]=-104, [32]=-104, [33]=-104, [34]=-104, [35]=-103, [36]=-103, [37]=-103,
-                [101]=-112, [102]=-112}
-  elseif mod.vMaj == 3 then
-    mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "250Hz", "333HzFull", "500Hz", "D250", "D500", "F500", "F1000",
-                "D50", "200HzFull", "DK500", "K1000", "9K1000", "K1000Full" }
-   -- Note: Always use 2.4 limits when overlapping
-    mod.RFRSSI = {0, -123, -115, -117, -112, -112, -112, -108, -105, -105, -104, -104, -104, -104,
-                  -112, -111, -103, -103, 0, -101 }
+  if mod.vMaj == 3 then
+    mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "100HzFull", "150Hz", "200Hz", "250Hz", "333HzFull", "500Hz", "D250", "D500", "F500", "F1000" }
+   -- Note: Always use 2.4 limits
+    mod.RFRSSI = {-128, -123, -115, -117, -112, -112, -112, -108, -105, -105, -104, -104, -104, -104}
   else
     mod.RFMOD = {"", "25Hz", "50Hz", "100Hz", "150Hz", "200Hz", "250Hz", "500Hz"}
-    mod.RFRSSI = {0, -123, -115, -117, -112, -112, -108, -105}
+    mod.RFRSSI = {-128, -123, -115, -117, -112, -112, -108, -105}
   end
   return true
 end
@@ -346,23 +348,19 @@ local function updateElrsVer()
   if command == 0x29 then
     if parseDeviceInfo(data) then
       -- Get rid of all the functions, only update once
-      --parseDeviceInfo = nil
-      --fieldGetString = nil
-      --updateElrsVer = nil
-      mod.lastDevPoll = nil
+      parseDeviceInfo = nil
+      fieldGetString = nil
+      updateElrsVer = nil
+      mod.lastUpd = nil
     end
     return
   end
 
-  -- Stop polling after the first device is loaded
-  -- EdgeTX 2.11+ does its own polling, rely on that to change devices after the first time
-  if mod.name then return end
-
   local now = getTime()
   -- Poll the module every second
-  if now - (mod.lastDevPoll or 0) > 100 then
+  if (mod.lastUpd or 0) + 100 < now then
     crossfireTelemetryPush(0x28, {0x00, 0xEA})
-    mod.lastDevPoll = now
+    mod.lastUpd = now
   end
 end
 
@@ -388,7 +386,7 @@ local function refresh(widget, event, touchState)
         lcd.drawText(widget.zw / 2, Y, "Last GPS position", COLOR_THEME_PRIMARY1 + CENTER + SMLSIZE)
         Y = Y + TH
       end
-      drawGps(widget, Y)
+      drawGpsPos(widget, Y)
     end
     widget.ctx = nil
     return
@@ -417,10 +415,10 @@ local function refresh(widget, event, touchState)
 
   -- TX Power
   if widget.size < 4 then
-    lcd.drawText(widget.zw - 15, widget.zh - 30, "Power", SMLSIZE + RIGHT + COLOR_THEME_SECONDARY2 + SHADOWED)
-    lcd.drawText(widget.zw - 14, widget.zh - 18, tostring(tlm.tpwr) .. "mW", RIGHT + COLOR_THEME_PRIMARY3)
+    lcd.drawText(widget.zw - 15, widget.zh - 40, "Power", SMLSIZE + RIGHT + COLOR_THEME_SECONDARY2 + SHADOWED)
+    lcd.drawText(widget.zw - 14, widget.zh - 28, tostring(tlm.tpwr) .. "mW", RIGHT + COLOR_THEME_PRIMARY3)
   else
-    lcd.drawText(widget.zw - 15, widget.zh - 15, tostring(tlm.tpwr) .. "mW", SMLSIZE + RIGHT + COLOR_THEME_PRIMARY3)
+    lcd.drawText(widget.zw - 15, widget.zh - 20, tostring(tlm.tpwr) .. "mW", SMLSIZE + RIGHT + COLOR_THEME_PRIMARY3)
   end
   drawPowerLvl(0, 6, 6, tlm.tpwr, widget.zw, widget.zh) -- uses 1W as max
 
@@ -432,7 +430,6 @@ end
 
 return {
   name = "ELRS Telem",
-  options = {},
   create = create,
   update = update,
   refresh = refresh,
